@@ -3,7 +3,7 @@ CFLAGS=-g -Wall -std=c++11
 
 SRCS=\
 main.cpp\
-Circle.cpp\
+helper.cpp\
 FastDetector.cpp
 
 OBJS=$(SRCS:.cpp=.o)

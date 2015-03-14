@@ -1,13 +1,12 @@
 #ifndef _FASTDETECTOR_H_
 #define _FASTDETECTOR_H_
 
-#include <vector>
 #include <opencv2/core/core.hpp>
 
-#include "Circle.h"
+#include "helper.h"
 
 #define THRESHOLD 17 // smallest difference in pixel intensity noticed as possible corner
-#define ANGULAR_THRESHOLD 10 // maximum allowable difference in orientation of corner
+#define ANGULAR_THRESHOLD 20 // maximum allowable difference in orientation of corner
 
 class FastDetector {
     std::vector<cv::Point> detectedPoints;

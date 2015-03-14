@@ -1,12 +1,8 @@
-#include <vector>
 #include <iostream>
-#include <algorithm>
-#include <cassert>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include "Circle.h" // lookup table for circle coordinates used for FAST detection
 #include "FastDetector.h" // fast detector implementation
 
 int main(int argc, char* argv[])

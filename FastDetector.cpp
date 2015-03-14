@@ -2,6 +2,12 @@
 
 #include <opencv2/core/core.hpp>
 
+#include <vector>
+
+#define DARKER 1
+#define SIMILAR 2
+#define BRIGHTER 3
+
 FastDetector::FastDetector() {}
 
 cv::Mat FastDetector::greyScale(cv::Mat image)
@@ -37,67 +43,59 @@ CircleData FastDetector::exploreCircle(cv::Mat& image, int x, int y, int r)
     int angle_brb=-1, angle_bre=-1;
     int angle=-1;
 
+    unsigned int intensity=0;
+
     // march around the circle and look for longest consecutive
     // brighter or darker pixels which signify a corner
-    bool br=false;
     for(int i=0; i<2*szCirc; i++) {
         int cx = circ[i%szCirc].x;
         int cy = circ[i%szCirc].y;
         int piPix = pixelAt(image, cx, cy);
         if (centerPix > piPix + THRESHOLD) {
             if (i==0) {
-                br = false;
                 angle=getAngle(i%szCirc,r);
-            }
-            if (!br) {
+            } else if (intensity == DARKER) {
                 consec++;
             } else {
-                if (brconsec>consec) {
-                    angle_bre=getAngle(i%szCirc,r);
-                    angle_brb=angle;
+                if (intensity == BRIGHTER && consec > brconsec) {
+                    angle_bre = getAngle(i%szCirc,r);
+                    angle_brb = angle;
+                    brconsec = consec;
                 }
                 angle=getAngle(i%szCirc,r);
-                brconsec = std::max(brconsec,consec);
                 consec=1;
-                br = false;
             }
+            intensity = DARKER;
         } else if (centerPix < piPix - THRESHOLD) {
             if (i==0) {
-                br = true;
                 angle=getAngle(i%szCirc,r);
-            }
-            if (br) {
+            } else if (intensity == BRIGHTER) {
                 consec++;
             } else {
-                if (dkconsec>consec) {
-                    angle_dke=getAngle(i%szCirc,r);
-                    angle_dkb=angle;
+                if (intensity == DARKER && consec > dkconsec) {
+                    angle_dke = getAngle(i%szCirc,r);
+                    angle_dkb = angle;
+                    dkconsec = consec;
                 }
                 angle=getAngle(i%szCirc,r);
-                dkconsec = std::max(dkconsec,consec);
                 consec=1;
-                br = true;
             }
+            intensity = BRIGHTER;
         } else {
-            if (br) {
-                if (brconsec>consec) {
-                    angle_bre=getAngle(i%szCirc,r);
-                    angle_brb=angle;
+            if (intensity == BRIGHTER) {
+                if (consec > brconsec) {
+                    angle_bre = getAngle(i%szCirc,r);
+                    angle_brb = angle;
+                    brconsec = consec;
                 }
-                angle=getAngle(i%szCirc,r);
-                brconsec = std::max(brconsec,consec);
-                consec=0;
-                br = false;
-            } else {
-                if (dkconsec>consec) {
-                    angle_dke=getAngle(i%szCirc,r);
-                    angle_dkb=angle;
+            } else if (intensity == DARKER) {
+                if (consec > dkconsec) {
+                    angle_dke = getAngle(i%szCirc,r);
+                    angle_dkb = angle;
+                    dkconsec = consec;
                 }
-                angle=getAngle(i%szCirc,r);
-                dkconsec = std::max(dkconsec,consec);
-                consec=0;
-                br = true;
             }
+            intensity = SIMILAR;
         }
     }
     
@@ -131,13 +129,16 @@ bool FastDetector::crossCheck(cv::Mat& image, int x, int y)
     int p13Pix = pixelAt(image,x-3,y);
 
     int dkconsec=0, brconsec=0;
-    if (centerPix > p1Pix + THRESHOLD) dkconsec++;
+    if (centerPix > p1Pix + THRESHOLD) dkconsec++; // top point
     else if (centerPix < p1Pix - THRESHOLD) brconsec++;
-    if (centerPix > p5Pix + THRESHOLD) dkconsec++;
+
+    if (centerPix > p5Pix + THRESHOLD) dkconsec++; // right point
     else if (centerPix < p5Pix - THRESHOLD) brconsec++;
-    if (centerPix > p9Pix + THRESHOLD) dkconsec++;
+
+    if (centerPix > p9Pix + THRESHOLD) dkconsec++; // bottom point
     else if (centerPix < p9Pix - THRESHOLD) brconsec++;
-    if (centerPix > p13Pix + THRESHOLD) dkconsec++;
+
+    if (centerPix > p13Pix + THRESHOLD) dkconsec++; // left point
     else if (centerPix < p13Pix - THRESHOLD) brconsec++;
 
     if (dkconsec==3 || brconsec==3) return true;
