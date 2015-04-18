@@ -1,0 +1,7 @@
+# compiled object files
+*.o
+*.d
+
+#specific for this project
+fastdetector
+drive.jpg

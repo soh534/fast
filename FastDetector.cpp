@@ -10,29 +10,29 @@
 
 FastDetector::FastDetector() {}
 
-cv::Mat FastDetector::greyScale(cv::Mat image)
-{
-    // average out rgb pixel intensity
-    for(int y=0; y<image.rows; y++) {
-        cv::Vec3b* ptr = image.ptr<cv::Vec3b>(y);
-        for(int x=0; x<image.cols; x++) {
+cv::Mat FastDetector::greyScale(const cv::Mat& image)
+{ // average out rgb pixel intensity
+    cv::Mat ret(image);
+    for(int y=0; y<ret.rows; y++) {
+        cv::Vec3b* ptr = ret.ptr<cv::Vec3b>(y);
+        for(int x=0; x<ret.cols; x++) {
             int avg = (ptr[x][0]+ptr[x][1]+ptr[x][2])*0.33;
             ptr[x] = cv::Vec3b(avg,avg,avg);
         }
     }
-    return image;
+    return ret;
 }
 
-int FastDetector::pixelAt(cv::Mat& image, int x, int y)
-{
-    // quick function to grab pixel intensity from coordinates
+int FastDetector::pixelAt(const cv::Mat& image, const int& x, const int& y)
+{ // quick function to grab pixel intensity from coordinates
     int ret=-1;
-    cv::Vec3b* ptr = image.ptr<cv::Vec3b>(y);
+    const cv::Vec3b* ptr = image.ptr<cv::Vec3b>(y);
     ret = ptr[x][0];
     return ret;
 }
 
-CircleData FastDetector::exploreCircle(cv::Mat& image, int x, int y, int r)
+CircleData FastDetector::exploreCircle(const cv::Mat& image,
+                                       const int x, const int y, const int r)
 {
     int centerPix = pixelAt(image,x,y);
     std::vector<cv::Point> circ = getCircle(x, y, r);
@@ -103,7 +103,7 @@ CircleData FastDetector::exploreCircle(cv::Mat& image, int x, int y, int r)
     return cd;
 }
 
-int FastDetector::getOrientation(CircleData cd)
+int FastDetector::getOrientation(const CircleData& cd)
 {
     // determine which angle the consecutive darkness
     // or brightness is facing
@@ -116,7 +116,7 @@ int FastDetector::getOrientation(CircleData cd)
     return orientation;
 }
 
-bool FastDetector::crossCheck(cv::Mat& image, int x, int y)
+bool FastDetector::crossCheck(const cv::Mat& image, const int x, const int y)
 {
     // preliminary check for a corner to speed things up.
     // top, bottom, left, and right pixels must have 
@@ -145,7 +145,7 @@ bool FastDetector::crossCheck(cv::Mat& image, int x, int y)
     else return false;
 }
 
-bool FastDetector::defaultCheck(cv::Mat& image, int x, int y)
+bool FastDetector::defaultCheck(const cv::Mat& image, const int x, const int y)
 {
     // default FAST(features from accelerated segment test) algorithm
     CircleData cd = exploreCircle(image, x, y, 3);
@@ -157,7 +157,7 @@ bool FastDetector::defaultCheck(cv::Mat& image, int x, int y)
     return false;
 }
 
-bool FastDetector::extendedCheck(cv::Mat& image, int x, int y)
+bool FastDetector::extendedCheck(const cv::Mat& image, const int x, const int y)
 {
     // enhancement proposed in:
     // www.vision.cs.chubu.ac.jp/flabresearcharchive/bachelor/B12/Abstract/hasegawa.pdf
@@ -184,15 +184,15 @@ bool FastDetector::extendedCheck(cv::Mat& image, int x, int y)
     }
 }
 
-void FastDetector::detect(cv::Mat image)
+void FastDetector::detect(const cv::Mat& image)
 {
     // main caller - three detection levels
-    image = greyScale(image);
-    for(int y=5; y<image.rows-5; y++) {
-        for(int x=5; x<image.cols-5; x++) {
-            if (crossCheck(image,x,y)) {
-                if (defaultCheck(image,x,y)) {
-                    if (extendedCheck(image,x,y)) {
+    cv::Mat image_grey = greyScale(image);
+    for(int y=5; y<image_grey.rows-5; y++) {
+        for(int x=5; x<image_grey.cols-5; x++) {
+            if (crossCheck(image_grey,x,y)) {
+                if (defaultCheck(image_grey,x,y)) {
+                    if (extendedCheck(image_grey,x,y)) {
                         detectedPoints.push_back(cv::Point(x,y));
                     }
                 }
